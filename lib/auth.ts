@@ -1,14 +1,7 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { createPool } from "mysql2/promise"
+import { supabase } from "@/lib/supabase"
 import bcrypt from "bcryptjs"
-
-const pool = createPool({
-  host: process.env.MYSQL_HOST || "localhost",
-  user: process.env.MYSQL_USER || "root",
-  password: process.env.MYSQL_PASSWORD || "",
-  database: process.env.MYSQL_DATABASE || "agricultural_app",
-})
 
 export const authOptions = {
   providers: [
@@ -16,25 +9,34 @@ export const authOptions = {
       name: "credentials",
       credentials: { email: {}, password: {} },
       async authorize(credentials) {
-        const [rows] = await pool.execute("SELECT * FROM users WHERE email = ?", [credentials?.email])
-        const user = (rows as any[])[0]
+        const { data: users, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', credentials?.email)
+          .single()
 
-        if (!user || !(await bcrypt.compare(credentials!.password, user.password))) {
+        if (error || !users || !(await bcrypt.compare(credentials!.password, users.password))) {
           return null
         }
 
-        return { id: user.id, name: user.name, email: user.email }
+        return { id: users.id, name: users.name, email: users.email, userType: users.user_type }
       },
     }),
   ],
   session: { strategy: "jwt" as const },
   callbacks: {
     async jwt({ token, user }) {
-      if (user) token.id = user.id
+      if (user) {
+        token.id = user.id
+        token.userType = (user as any).userType
+      }
       return token
     },
     async session({ session, token }) {
-      if (token) session.user.id = token.id as string
+      if (token) {
+        session.user.id = token.id as string
+        session.user.userType = token.userType as string
+      }
       return session
     },
   },

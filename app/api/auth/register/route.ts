@@ -1,29 +1,28 @@
 import { type NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
-import { createConnection } from "mysql2/promise"
+import { supabase } from "@/lib/supabase"
 import { v4 as uuidv4 } from "uuid"
-
-const connection = createConnection({
-  host: process.env.MYSQL_HOST || "localhost",
-  user: process.env.MYSQL_USER || "app_user",
-  password: process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DATABASE || "agricultural_app",
-})
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name } = await request.json()
+    const { email, password, name, userType } = await request.json()
 
-    if (!email || !password || !name) {
-      return NextResponse.json({ error: "Email, password, and name are required" }, { status: 400 })
+    if (!email || !password || !name || !userType) {
+      return NextResponse.json({ error: "Email, password, name, and user type are required" }, { status: 400 })
     }
 
-    const conn = await connection
+    if (!['farmer', 'customer'].includes(userType)) {
+      return NextResponse.json({ error: "User type must be 'farmer' or 'customer'" }, { status: 400 })
+    }
 
     // Check if user already exists
-    const [existingUsers] = await conn.execute("SELECT id FROM users WHERE email = ?", [email])
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle()
 
-    if ((existingUsers as any[]).length > 0) {
+    if (existingUser) {
       return NextResponse.json({ error: "User already exists" }, { status: 400 })
     }
 
@@ -32,18 +31,35 @@ export async function POST(request: NextRequest) {
     const userId = uuidv4()
 
     // Create user
-    await conn.execute("INSERT INTO users (id, email, password, name) VALUES (?, ?, ?, ?)", [
-      userId,
-      email,
-      hashedPassword,
-      name,
-    ])
+    const { error: userError } = await supabase
+      .from('users')
+      .insert({
+        id: userId,
+        email,
+        password: hashedPassword,
+        name,
+        user_type: userType
+      })
+
+    if (userError) {
+      console.error("User creation error:", userError)
+      return NextResponse.json({ error: "Failed to create user" }, { status: 500 })
+    }
 
     // Create corresponding profile
-await conn.execute(
-  "INSERT INTO user_profiles (id, email, full_name) VALUES (?, ?, ?)",
-  [userId, email, name]
-)
+    const { error: profileError } = await supabase
+      .from('user_profiles')
+      .insert({
+        id: userId,
+        email,
+        full_name: name,
+        user_type: userType
+      })
+
+    if (profileError) {
+      console.error("Profile creation error:", profileError)
+      return NextResponse.json({ error: "Failed to create profile" }, { status: 500 })
+    }
 
     return NextResponse.json({ message: "User created successfully" }, { status: 201 })
   } catch (error) {

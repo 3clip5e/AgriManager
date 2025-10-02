@@ -1,5 +1,4 @@
-// import { query, db } from "@/lib/database"
-import { db, query } from "@/lib/mysql"
+import { supabase } from "@/lib/supabase"
 import ProductCard from "@/components/product-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,29 +17,34 @@ export default async function MarketplacePage({
   searchParams: SearchParams
 }) {
   // Build query
-  let sql = `
-    SELECT p.*, u.name as seller_name, u.email as seller_email
-    FROM products p
-    JOIN users u ON p.user_id = u.id
-    WHERE p.status = 'available' AND p.quantity_available > 0
-  `
-  const params: any[] = []
+  let query = supabase
+    .from('products')
+    .select('*, users!products_user_id_fkey(name, email)')
+    .eq('status', 'available')
+    .gt('quantity_available', 0)
 
   // Apply filters
   if (searchParams.category) {
-    sql += " AND p.category = ?"
-    params.push(searchParams.category)
+    query = query.eq('category', searchParams.category)
   }
 
   if (searchParams.search) {
-    sql += " AND p.name LIKE ?"
-    params.push(`%${searchParams.search}%`)
+    query = query.ilike('name', `%${searchParams.search}%`)
   }
 
-  sql += " ORDER BY p.created_at DESC"
+  query = query.order('created_at', { ascending: false })
 
-  const products = await query(sql, params) as any[]
-  // const products = productRows as any[]
+  const { data: productsData, error } = await query
+
+  if (error) {
+    console.error("Error fetching products:", error)
+  }
+
+  const products = productsData?.map(p => ({
+    ...p,
+    seller_name: (p.users as any)?.name,
+    seller_email: (p.users as any)?.email
+  })) || []
 
   return (
     <div className="min-h-screen bg-gray-50">

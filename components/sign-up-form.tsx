@@ -5,8 +5,10 @@ import { useFormStatus } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Sprout } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Loader2, Sprout, Users, ShoppingCart } from "lucide-react"
 import Link from "next/link"
+import { cn } from "@/lib/utils"
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -27,6 +29,7 @@ function SubmitButton() {
 
 export default function SignUpForm() {
   const [state, setState] = useState<{ error?: string; success?: string } | null>(null)
+  const [userType, setUserType] = useState<'farmer' | 'customer'>('customer')
 
   const handleSubmit = async (formData: FormData) => {
     const email = formData.get("email") as string
@@ -37,7 +40,7 @@ export default function SignUpForm() {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name: fullName }),
+        body: JSON.stringify({ email, password, name: fullName, userType }),
       })
 
       const data = await response.json()
@@ -66,16 +69,74 @@ export default function SignUpForm() {
       <CardContent>
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit(new FormData(e.currentTarget)) }}>
           {state?.error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm mb-4">
               {state.error}
             </div>
           )}
 
           {state?.success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm mb-4">
               {state.success}
             </div>
           )}
+
+          <div className="space-y-4 mb-4">
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                Je suis un...
+              </Label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setUserType('customer')}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-4 border-2 rounded-lg transition-all",
+                    userType === 'customer'
+                      ? "border-green-600 bg-green-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  )}
+                >
+                  <ShoppingCart className={cn(
+                    "h-8 w-8",
+                    userType === 'customer' ? "text-green-600" : "text-gray-400"
+                  )} />
+                  <span className={cn(
+                    "font-medium",
+                    userType === 'customer' ? "text-green-900" : "text-gray-700"
+                  )}>
+                    Client
+                  </span>
+                  <span className="text-xs text-gray-500 text-center">
+                    Acheter des produits
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserType('farmer')}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-4 border-2 rounded-lg transition-all",
+                    userType === 'farmer'
+                      ? "border-green-600 bg-green-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  )}
+                >
+                  <Users className={cn(
+                    "h-8 w-8",
+                    userType === 'farmer' ? "text-green-600" : "text-gray-400"
+                  )} />
+                  <span className={cn(
+                    "font-medium",
+                    userType === 'farmer' ? "text-green-900" : "text-gray-700"
+                  )}>
+                    Agriculteur
+                  </span>
+                  <span className="text-xs text-gray-500 text-center">
+                    Gérer et vendre
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
 
           <div className="space-y-2">
             <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
@@ -88,7 +149,7 @@ export default function SignUpForm() {
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email
             </label>
-            <Input id="email" name="email" type="email" placeholder="fermier@example.com" required className="w-full" />
+            <Input id="email" name="email" type="email" placeholder="votre@email.com" required className="w-full" />
           </div>
 
           <div className="space-y-2">

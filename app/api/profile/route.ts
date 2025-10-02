@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query } from "@/lib/database";
+import { supabase } from "@/lib/supabase";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import cloudinary from "@/lib/cloudinary";
@@ -10,19 +10,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const users = await query(
-    `SELECT u.id, u.name AS full_name, u.email, p.phone, p.address, u.image AS image
-     FROM users u
-     LEFT JOIN user_profiles p ON u.id = p.id
-     WHERE u.id = ?`,
-    [session.user.id]
-  );
+  const { data: profile, error } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('id', session.user.id)
+    .maybeSingle();
 
-  if (!users || users.length === 0) {
+  if (error || !profile) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  return NextResponse.json(users[0]);
+  return NextResponse.json(profile);
 }
 
 export async function POST(req: NextRequest) {
@@ -43,28 +41,23 @@ export async function POST(req: NextRequest) {
       transformation: [{ width: 300, height: 300, crop: "thumb", gravity: "face" }],
     });
     imageUrl = uploadResponse.secure_url;
-  } else {
-      // Récupérer l'ancienne image depuis la base
-      const result = await query(
-      `SELECT image_url FROM user_profiles WHERE id = ?`,
-      [session.user.id]
-      );
-      imageUrl = result[0]?.image_url || null;
-}
+  }
 
-  await query(
-    `UPDATE user_profiles
-     SET full_name = ?, phone = ?, address = ?, image_url = ?, updated_at = NOW()
-     WHERE id = ?`,
-    [full_name || null, phone || null, address || null, imageUrl, session.user.id]
-  );
+  await supabase
+    .from('user_profiles')
+    .update({
+      full_name: full_name || null,
+      phone: phone || null,
+      address: address || null
+    })
+    .eq('id', session.user.id);
 
-  await query(
-    `UPDATE users
-     SET name = ?, image = ?
-     WHERE id = ?`,
-    [full_name || null, imageUrl, session.user.id]
-  );
+  await supabase
+    .from('users')
+    .update({
+      name: full_name || null
+    })
+    .eq('id', session.user.id);
 
   return NextResponse.json({ message: "Profile updated successfully", imageUrl });
 }
