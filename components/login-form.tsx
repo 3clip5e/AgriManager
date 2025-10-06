@@ -8,13 +8,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Sprout } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { signIn } from "next-auth/react"
+import { signIn, getSession } from "next-auth/react"
 
 function SubmitButton() {
   const { pending } = useFormStatus()
 
   return (
-    <Button type="submit" disabled={pending} className="w-full bg-green-600 hover:bg-green-700 text-white">
+    <Button
+      type="submit"
+      disabled={pending}
+      className="w-full bg-green-600 hover:bg-green-700 text-white"
+    >
       {pending ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -31,26 +35,37 @@ export default function LoginForm() {
   const router = useRouter()
   const [state, setState] = useState<{ error?: string } | null>(null)
 
-  const handleSubmit = async (formData: FormData) => {
-    const email = formData.get("email") as string
-    const password = formData.get("password") as string
+       // Dans LoginForm (extrait handleSubmit seulement – gardez reste identique)
+     const handleSubmit = async (formData: FormData) => {
+       setState(null);  // Reset
+       const email = formData.get("email") as string;
+       const password = formData.get("password") as string;
 
-    try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      })
+       try {
+         console.log("🔍 Client: signIn pour", email);  // Debug client
+         const result = await signIn("credentials", {
+           email,
+           password,
+           redirect: false,
+         });
 
-      if (result?.error) {
-        setState({ error: "Identifiants invalides" })
-      } else {
-        router.push("/dashboard")
-      }
-    } catch (error) {
-      setState({ error: "Une erreur inattendue est survenue" })
-    }
-  }
+         if (result?.error) {
+           console.error("🔍 Client Error:", result.error);  // e.g., "CredentialsSignin"
+           setState({ error: result.error === "CredentialsSignin" ? "Identifiants invalides" : result.error });
+           return;
+         }
+
+         if (result?.ok) {
+           console.log("✅ Client: SignIn OK, push /dashboard (middleware rôle)");
+           router.push("/dashboard");  // Middleware check token.role → /marketplace si buyer
+           router.refresh();  // Update session
+         }
+       } catch (error) {
+         console.error("❌ Client Catch:", error);  // Si throw inattendu
+         setState({ error: "Une erreur inattendue est survenue. Vérifiez console." });
+       }
+     };
+     
 
   return (
     <Card className="w-full max-w-md">

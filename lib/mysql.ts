@@ -12,6 +12,9 @@ const connectionConfig = {
 
 const pool = mysql.createPool(connectionConfig)
 
+export const db = pool 
+
+
 export async function query(sql: string, params?: any[]) {
   try {
     const [rows] = await pool.execute(sql, params)
@@ -23,6 +26,5 @@ export async function query(sql: string, params?: any[]) {
 }
 
 // export { pool as db }
-
-export const db = pool  // si pool est ton objet MySQL
+ // si pool est ton objet MySQL
 // export const query = (...args) => pool.query(...args)

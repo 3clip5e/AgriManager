@@ -20,7 +20,7 @@ export default function TableauDeBordNav() {
   const { user, loading } = useUser();
   const pathname = usePathname();
 
-  if (loading) return <p>Chargement...</p>;
+  // if (loading) return <p>Chargement...</p>;
   if (!user) return <p>Non connecté</p>;
 
   const initials = user.full_name

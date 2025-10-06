@@ -36,29 +36,32 @@ interface Farm {
   parcels: Parcel[];
 }
 
-interface Props {
-  params: { farmId: string };
-}
+export default async function FarmPage({
+  params,
+}: {
+  params: Promise<{ farmId: string }>;
+}) {
+  const resolvedParams = await params;
+  const { farmId } = resolvedParams;
 
-export default async function FarmPage({ params }: Props) {
-  // Récupération de la session
+  // 🔐 Auth
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect("/auth/login");
 
-  if (!params?.farmId) notFound();
+  if (!farmId) notFound();
 
-  // Récupérer la ferme
+  // 🌾 Récupérer la ferme
   const farms = await query(
     `SELECT id, name, location, total_area, description, organic_certified
      FROM farms
      WHERE id = ? AND user_id = ?`,
-    [params.farmId, session.user.id]
+    [farmId, session.user.id]
   );
 
   if (!farms || farms.length === 0) notFound();
   const farmRow = farms[0];
 
-  // Récupérer les parcelles et plantations
+  // 🧱 Récupérer les parcelles + plantations
   const fields = await query(
     `SELECT f.id AS field_id, f.name AS field_name, f.area, f.soil_type, f.soil_ph, f.irrigation_type,
             p.id AS planting_id, c.name AS crop_name, p.status, p.quantity_planted, p.quantity_harvested
@@ -66,7 +69,7 @@ export default async function FarmPage({ params }: Props) {
      LEFT JOIN plantings p ON p.field_id = f.id
      LEFT JOIN crop_types c ON c.id = p.crop_type_id
      WHERE f.farm_id = ?`,
-    [params.farmId]
+    [farmId]
   );
 
   // Regrouper les plantations par parcelle
@@ -104,7 +107,7 @@ export default async function FarmPage({ params }: Props) {
     parcels: Object.values(parcelsMap),
   };
 
-  // Rendu graphique comme AddFieldPage
+  // 🧭 Rendu
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardNav
@@ -119,11 +122,13 @@ export default async function FarmPage({ params }: Props) {
           <Link href="/dashboard/fields">
             <Button variant="ghost" className="mb-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Fields
+              Retour aux champs
             </Button>
           </Link>
           <h1 className="text-3xl font-bold text-gray-900">{farm.name}</h1>
-          <p className="text-gray-600">Details and parcels for this farm</p>
+          <p className="text-gray-600">
+            Détails et parcelles associées à cette ferme
+          </p>
         </div>
 
         <FarmDetails farm={farm} />

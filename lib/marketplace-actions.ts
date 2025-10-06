@@ -27,7 +27,7 @@ export async function createProduct(prevState: any, formData: FormData) {
 
   try {
     await db.query(
-      `INSERT INTO products (user_id, name, description, category, price_per_unit, unit, quantity_available, harvest_date, expiry_date, organic_certified, status) 
+      `INSERT INTO products (farmer_id, name, description, category, price_per_unit, unit, quantity_available, harvest_date, expiry_date, organic_certified, status) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         session.user.id,

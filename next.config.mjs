@@ -12,7 +12,7 @@ const nextConfig = {
   experimental: {
     forceSwcTransforms: false,
   },
-  swcMinify: false,
+  // swcMinify: false,
 };
 
 export default nextConfig;

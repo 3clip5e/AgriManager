@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { query, db } from "@/lib/database"
+import { db, query } from "@/lib/mysql";
 import DashboardNav from "@/components/dashboard-nav"
 import AIChat from "@/components/ai-chat"
 import RecommendationCard from "@/components/recommendation-card"

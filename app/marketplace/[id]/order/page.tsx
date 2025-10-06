@@ -9,6 +9,12 @@ import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { CheckoutButton } from "@/components/checkout-button"
 
+export default async function MarketplacePage() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    redirect("/auth/login");
+  }
+
 export default async function OrderPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
 

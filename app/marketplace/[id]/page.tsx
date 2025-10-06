@@ -55,7 +55,7 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
           <div className="space-y-6">
             <div>
               <div className="flex items-start justify-between mb-4">
-                <div>
+                <div>                             
                   <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
                   <div className="flex items-center gap-2 mt-2">
                     <Badge variant="outline" className="bg-transparent">

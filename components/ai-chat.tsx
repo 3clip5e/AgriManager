@@ -118,14 +118,19 @@ export default function AIChat() {
 
         {/* Zone de saisie */}
         <div className="border-t p-4">
-          <form action={handleSubmit} className="flex space-x-2">
+          <form onSubmit={(e) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget) 
+    handleSubmit(formData) }}  className="flex space-x-2">
             <Input
               name="question"
               placeholder="Posez une question sur vos cultures, le sol, la météo ou les pratiques agricoles..."
               className="flex-1"
               autoComplete="off"
             />
-            <SendButton />
+            <Button type="submit" disabled={loading} size="sm" className="bg-purple-600 hover:bg-purple-700">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
           </form>
           {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
         </div>

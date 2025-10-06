@@ -5,8 +5,10 @@ import { useFormStatus } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Sprout } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Loader2, Sprout, Users, ShoppingCart } from "lucide-react"
 import Link from "next/link"
+import {cn} from "@/lib/utils"
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -27,6 +29,8 @@ function SubmitButton() {
 
 export default function SignUpForm() {
   const [state, setState] = useState<{ error?: string; success?: string } | null>(null)
+  const [userType, setUserType] = useState<'farmer' | 'buyer'>('farmer')
+
 
   const handleSubmit = async (formData: FormData) => {
     const email = formData.get("email") as string
@@ -37,7 +41,7 @@ export default function SignUpForm() {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name: fullName }),
+        body: JSON.stringify({ email, password, name: fullName, userType }),
       })
 
       const data = await response.json()
@@ -76,6 +80,64 @@ export default function SignUpForm() {
               {state.success}
             </div>
           )}
+
+          <div className="space-y-4 mb-4">
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                Je suis un...
+              </Label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setUserType('buyer')}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-4 border-2 rounded-lg transition-all",
+                    userType === 'buyer'
+                      ? "border-green-600 bg-green-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  )}
+                >
+                  <ShoppingCart className={cn(
+                    "h-8 w-8",
+                    userType === 'buyer' ? "text-green-600" : "text-gray-400"
+                  )} />
+                  <span className={cn(
+                    "font-medium",
+                    userType === 'buyer' ? "text-green-900" : "text-gray-700"
+                  )}>
+                    Client
+                  </span>
+                  <span className="text-xs text-gray-500 text-center">
+                    Acheter des produits
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserType('farmer')}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-4 border-2 rounded-lg transition-all",
+                    userType === 'farmer'
+                      ? "border-green-600 bg-green-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  )}
+                >
+                  <Users className={cn(
+                    "h-8 w-8",
+                    userType === 'farmer' ? "text-green-600" : "text-gray-400"
+                  )} />
+                  <span className={cn(
+                    "font-medium",
+                    userType === 'farmer' ? "text-green-900" : "text-gray-700"
+                  )}>
+                    Agriculteur
+                  </span>
+                  <span className="text-xs text-gray-500 text-center">
+                    Gérer et vendre
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
 
           <div className="space-y-2">
             <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">

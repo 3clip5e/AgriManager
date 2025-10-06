@@ -1,8 +1,6 @@
-import { query, db } from "@/lib/mysql"
+import { db, query } from "@/lib/mysql"
 
-export { db }
-
-export { query }
+export { db, query }
 
 export async function getFarmsWithFields(userId: string) {
   try {
