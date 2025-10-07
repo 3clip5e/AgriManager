@@ -1,5 +1,7 @@
+// lib/cloudinary.ts
 import { v2 as cloudinary } from "cloudinary";
 
+// Configuration (charge depuis .env.local)
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,

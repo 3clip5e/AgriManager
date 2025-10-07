@@ -4,7 +4,9 @@ import { Inter } from "next/font/google"
 import { JetBrains_Mono } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "sonner" 
-import { Providers } from "./providers" 
+import { Providers } from "./providers"
+import { SessionProvider } from 'next-auth/react';  // ← NOUVEAU : Import Provider
+import { auth } from '@/lib/auth';  // ← NOUVEAU : Import votre NextAuth config (ex. : app/api/auth/[...nextauth]/route.ts export { auth })
 
 const inter = Inter({
   subsets: ["latin"],

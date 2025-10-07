@@ -16,7 +16,7 @@ export default async function DashboardMarketplacePage() {
     redirect("/auth/login")
   }
 
-  const products = await query("SELECT * FROM products WHERE user_id = ? ORDER BY created_at DESC", [
+  const products = await query("SELECT * FROM products WHERE farmer_id = ? ORDER BY created_at DESC", [
     session.user.id,
   ]);
   // const products = productRows as any[]
